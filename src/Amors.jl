@@ -37,11 +37,11 @@ exceeded the maximum number of iterations.
 The objective of AMORS is to minimize in `x ∈ X` and `y ∈ Y` an objective
 function of the form:
 
-    F(x,y) = G(x⋆y) + µ⋅J(x) + λ⋅K(y)
+    F(x,y) = G(x⋆y) + λ⋅J(x) + µ⋅K(y)
 
 where `G` is a function of the *bilinear model* `x⋆y`, `J` and `K` are positive
-homogeneous functions of the respective variables `x` and `y` while `µ > 0` and
-`λ > 0` are so-called hyper-parameters. The notation `x⋆y` denotes a *bilinear
+homogeneous functions of the respective variables `x` and `y` while `λ > 0` and
+`µ > 0` are so-called hyper-parameters. The notation `x⋆y` denotes a *bilinear
 model* which has the following invariance property:
 
     (α⋅x)⋆(y/α) = x⋆y
@@ -50,11 +50,11 @@ for any factor `α > 0`.
 
 The object `f` collects any data, workspaces, information, etc. needed to deal
 with the objective function `F(x,y)`. This includes `X`, `Y`, `G`, `J`, `K`,
-`μ`, and `λ`.
+`λ`, and `µ`.
 
 Note that thanks to the properties guaranteed by AMORS, the shapes of the
  components `x` and `y` depend on the tuning of only one of hyper-parameter
- (`µ` or `λ`, for instance).
+ (`λ` or `µ`, for instance).
 
 The AMORS algorithm requires that methods `Amors.update!` and
 `Amors.best_factor` be specialized for the types of `f`, `x`, and `y` so that:
@@ -70,10 +70,10 @@ that:
 yields the optimal value of the factor `α` such that `F(α⋅x,y/α)` is minimized
 in `α`. As a helper, this latter method can be called as:
 
-    Amors.best_factor(µ⋅J(x), q, λ⋅K(y), r)
+    Amors.best_factor(λ⋅J(x), q, µ⋅K(y), r)
 
-to compute the best factor `α` given the current values of the terms `µ⋅J(x)`
-and `λ⋅K(y)` and the homogeneous degrees `q` and `r` of the functions `J` and
+to compute the best factor `α` given the current values of the terms `λ⋅J(x)`
+and `µ⋅K(y)` and the homogeneous degrees `q` and `r` of the functions `J` and
 `K` respectively. The initial factor `α` may be a value, or one of the symbolic
 names `:auto` or `:const`. If a value is specified, it is used to scale the
 initial variables and the best factor is used for every other iteration. If
@@ -243,23 +243,23 @@ function scale!(x::AbstractArray{T}, α::Number) where {T<:Number}
 end
 
 """
-    Amors.best_factor(µ⋅J(x), q, λ⋅K(y), r) -> α
+    Amors.best_factor(λ⋅J(x), q, µ⋅K(y), r) -> α
 
 yields the best factor `α > 0` such that:
 
-    µ⋅J(α⋅x) + λ⋅K(y/α) = α^q⋅μ⋅J(x) + λ⋅K(y)/α^r
+    λ⋅J(α⋅x) + µ⋅K(y/α) = α^q⋅λ⋅J(x) + µ⋅K(y)/α^r
 
-is minimized in `α`. Arguments are the current values of the terms `µ⋅J(x)` and
-`λ⋅K(y)` and the homogeneous degrees `q` and `r` of the fucntions `J` and `K`
+is minimized in `α`. Arguments are the current values of the terms `λ⋅J(x)` and
+`µ⋅K(y)` and the homogeneous degrees `q` and `r` of the fucntions `J` and `K`
 respectively. This problem has the following closed-form solution:
 
-    α = ((r⋅λ⋅K(y))/(q⋅μ⋅J(x)))^(1/(q + r))
+    α = ((r⋅µ⋅K(y))/(q⋅λ⋅J(x)))^(1/(q + r))
 
 which is returned by this function.
 
 """
 best_factor(args::Vararg{Real,4}) = best_factor(map(Float64, args)...)
-best_factor(μJx::Float64, q::Float64, λKy::Float64, r::Float64) =
-    ((r*λKy)/(q*μJx))^(1.0/(q + r))
+best_factor(λJx::Float64, q::Float64, µKy::Float64, r::Float64) =
+    ((r*µKy)/(q*λJx))^(1.0/(q + r))
 
 end

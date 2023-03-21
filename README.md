@@ -10,12 +10,12 @@ The objective of AMORS is to minimize in `x ∈ X` and `y ∈ Y` an objective
 function of the form:
 
 ``` julia
-F(x,y) = G(x⋆y) + µ⋅J(x) + λ⋅K(y)
+F(x,y) = G(x⋆y) + λ⋅J(x) + µ⋅K(y)
 ```
 
 where `G` is a function of the *bilinear model* `x⋆y`, `J` and `K` are positive
-homogeneous functions of the respective variables `x` and `y` while `µ > 0` and
-`λ > 0` are so-called hyper-parameters. The notation `x⋆y` denotes a *bilinear
+homogeneous functions of the respective variables `x` and `y` while `λ > 0` and
+`µ > 0` are so-called hyper-parameters. The notation `x⋆y` denotes a *bilinear
 model* which has the following invariance property:
 
     (α⋅x)⋆(y/α) = x⋆y
