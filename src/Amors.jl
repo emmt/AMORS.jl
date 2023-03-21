@@ -131,7 +131,7 @@ function solve!(f, x, y, α::Real;
                 ytol::Real = xtol,
                 maxiter::Integer = default_maxiter,
                 conv::Function = check_convergence)
-    (keep_α_fixed && !isone(α)) || throw(ArgumentError("initial value of `α` must be 1"))
+    keep_α_fixed && !isone(α) && throw(ArgumentError("initial value of `α` must be 1"))
     α > zero(α) || throw(ArgumentError("initial value of `α` must be strictly positive"))
     first ∈ (:x, :y) || throw(ArgumentError("value of keyword `first` must be `:x` or `:y`"))
     zero(atol) < atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `(0,1)`"))
