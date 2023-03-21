@@ -197,6 +197,17 @@ function solve!(f, x, y, α::Real;
 end
 
 """
+    Amors.update!(Val(:x), f, x, y)
+    Amors.update!(Val(:y), f, x, y)
+
+respectively update variables `x` or `y` in-place and for the problem defined
+by `f`. When updating `x` (resp. `y`) variables `y` (resp. `x`) shall remain
+unchanged.
+
+"""
+function update! end
+
+"""
     Amors.check_convergence(x, xp, tol) -> bool
 
 yields whether iterate `x` has converged. Argument `xp` is the previous value
