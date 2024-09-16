@@ -280,7 +280,7 @@ function best_scaling_factor(Jx::Number, degJ::Number, Ky::Number, degK::Number)
     Ky > zero(Ky) || throw(DomainError(Ky, "`K(y) > 0` must hold"))
     degJ > zero(degJ) || throw(DomainError(degJ, "`deg(J) > 0` must hold"))
     degK > zero(degK) || throw(DomainError(degK, "`deg(K) > 0` must hold"))
-    return ((degK*Ky)/(degJ*Jx))^(inv(degJ + degK))
+    return ((degK*Ky)/(degJ*Jx))^inv(degJ + degK)
 end
 
 end
