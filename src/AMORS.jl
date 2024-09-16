@@ -231,8 +231,8 @@ See also `LinearAlgebra.lmul!(α::Number,x::AbstractArray)` and
 `LinearAlgebra.rmul!(x::AbstractArray,α::Number)`.
 
 """
-scale!(x::AbstractArray, α::Number, ) = scale!(x, α)
-function scale!(α::Real, x::AbstractArray)
+scale!(x::AbstractArray, α::Number) = scale!(α, x)
+function scale!(α::Number, x::AbstractArray)
     if iszero(α)
         fill!(x, zero(eltype(x)))
     else !isone(α)
