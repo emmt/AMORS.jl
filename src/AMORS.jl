@@ -101,14 +101,14 @@ The following keywords can be specified:
 - `first` is one of `Val(:x)` or `Val(:y)` (the default) to specify which component to
   update the first given the other.
 
-- `atol` is a relative tolerance ($default_atol by default) to assert the convergence in
-  the factor `α`.
+- `atol ∈ [0,1)` is a relative tolerance (`$default_atol` by default) to assert the
+  convergence in the factor `α`.
 
-- `xtol` is a relative tolerance ($default_xtol by default) to assert the convergence in
-  the variables `x`.
+- `xtol ∈ [0,1)` is a relative tolerance (`$default_xtol` by default) to assert the
+  convergence in the variables `x`.
 
-- `ytol` is a relative tolerance (`xtol` by default) to assert the convergence in the
-  variables `y`.
+- `ytol ∈ [0,1)` is a relative tolerance (`xtol` by default) to assert the convergence in
+  the variables `y`.
 
 - `maxiter` is the maximum number of algorithm iterations (`$default_maxiter` by default).
 
@@ -131,9 +131,9 @@ function solve!(f, x, y;
                 do_not_scale::Bool = false)
     # Check keywords.
     first ∈ (Val(:x), Val(:y)) || throw(ArgumentError("bad value for keyword `first`, must be `Val(:x)` or `Val(:y)`"))
-    zero(atol) < atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `(0,1)`"))
-    zero(xtol) < xtol < one(xtol) || throw(ArgumentError("value of keyword `xtol` must be in `(0,1)`"))
-    zero(ytol) < ytol < one(ytol) || throw(ArgumentError("value of keyword `ytol` must be in `(0,1)`"))
+    zero(atol) ≤ atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `[0,1)`"))
+    zero(xtol) ≤ xtol < one(xtol) || throw(ArgumentError("value of keyword `xtol` must be in `[0,1)`"))
+    zero(ytol) ≤ ytol < one(ytol) || throw(ArgumentError("value of keyword `ytol` must be in `[0,1)`"))
     maxiter ≥ 0 || throw(ArgumentError("value of keyword `maxiter` must be nonnegative"))
 
     # Initialize algorithm.
