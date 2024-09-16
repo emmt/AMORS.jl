@@ -17,7 +17,7 @@ in:
 """
 module AMORS
 
-using Unitless
+using TypeUtils
 
 const default_atol = 0.3
 const default_xtol = 1e-4
