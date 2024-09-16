@@ -1,8 +1,8 @@
 # A Julia framework to apply the AMORS algorithm
 
-[![Build Status](https://github.com/emmt/Amors.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/emmt/Amors.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Build Status](https://ci.appveyor.com/api/projects/status/github/emmt/Amors.jl?svg=true)](https://ci.appveyor.com/project/emmt/Amors-jl) [![Coverage](https://codecov.io/gh/emmt/Amors.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/emmt/Amors.jl)
+[![Build Status](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Build Status](https://ci.appveyor.com/api/projects/status/github/emmt/AMORS.jl?svg=true)](https://ci.appveyor.com/project/emmt/AMORS-jl) [![Coverage](https://codecov.io/gh/emmt/AMORS.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/emmt/AMORS.jl)
 
-The `Amors` module provides a framework to apply the AMORS (*Alternated
+The `AMORS` module provides a framework to apply the AMORS (*Alternated
 Minimization using Optimal ReScaling*) algorithm for estimating the components `x`
 and `y` of a *bilinear model* `x⋆y`.
 

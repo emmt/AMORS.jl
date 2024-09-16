@@ -1,6 +1,6 @@
 """
 
-The `Amors` module provides a framework to apply the AMORS algorithm described
+The `AMORS` module provides a framework to apply the AMORS algorithm described
 in:
 
 1. Samuel Thé, Éric Thiébaut, Loïc Denis, and Ferréol Soulez, "*Exploiting the
@@ -15,7 +15,7 @@ in:
    [doi: 10.1117/12.2630245]
 
 """
-module Amors
+module AMORS
 
 using Unitless
 
@@ -24,7 +24,7 @@ const default_xtol = 1e-4
 const default_maxiter = 1000
 
 """
-    Amors.solve!(f, x, y, α = :auto) -> info, x, y
+    AMORS.solve!(f, x, y, α = :auto) -> info, x, y
 
 solves regularized *bilinear model* estimation by AMORS method. Object `f`
 represents the objective function (see below). Arguments `x`, `y`, and `α` are
@@ -56,33 +56,33 @@ Note that thanks to the properties guaranteed by AMORS, the shapes of the
  components `x` and `y` depend on the tuning of only one of hyper-parameter
  (`λ` or `µ`, for instance).
 
-The AMORS algorithm requires that methods `Amors.update!` and
-`Amors.best_factor` be specialized for the types of `f`, `x`, and `y` so that:
+The AMORS algorithm requires that methods `AMORS.update!` and
+`AMORS.best_factor` be specialized for the types of `f`, `x`, and `y` so that:
 
-    Amors.update!(Val(:x), f, x, y) ≈ min_{x ∈ X} F(x,y)
-    Amors.update!(Val(:y), f, x, y) ≈ min_{y ∈ Y} F(x,y)
+    AMORS.update!(Val(:x), f, x, y) ≈ min_{x ∈ X} F(x,y)
+    AMORS.update!(Val(:y), f, x, y) ≈ min_{y ∈ Y} F(x,y)
 
 respectively update in-place the component `x` and `y` of the model and so
 that:
 
-    Amors.best_factor(f, x, y) -> α
+    AMORS.best_factor(f, x, y) -> α
 
 yields the optimal value of the factor `α` such that `F(α⋅x,y/α)` is minimized
 in `α`. As a helper, this latter method can be called as:
 
-    Amors.best_factor(λ⋅J(x), q, µ⋅K(y), r)
+    AMORS.best_factor(λ⋅J(x), q, µ⋅K(y), r)
 
 to compute the best factor `α` given the current values of the terms `λ⋅J(x)`
 and `µ⋅K(y)` and the homogeneous degrees `q` and `r` of the functions `J` and
 `K` respectively. The initial factor `α` may be a value, or one of the symbolic
 names `:auto` or `:const`. If a value is specified, it is used to scale the
 initial variables and the best factor is used for every other iteration. If
-`:auto` is specified `Amors.best_factor(f,x,y)` is always called to compute the
+`:auto` is specified `AMORS.best_factor(f,x,y)` is always called to compute the
 factor `α` (initially and at every iteration). If `:const` is specified, a
 constant factor `α = 1` is always used (initially and at every iteration). This
 latter possibility is not recommended, it is only useful for testing purposes.
 
-Note that the `Amors.update!` method is always called with the current
+Note that the `AMORS.update!` method is always called with the current
 (possibly pre-scaled) variables. This may be exploited to accelerate the
 updating by not starting from scratch.
 
@@ -108,7 +108,7 @@ The following keywords can be specified:
   default).
 
 - `conv` is a function used to check for convergence of the iterates
-  (`Amors.check_convergence` by default).
+  (`AMORS.check_convergence` by default).
 
 """
 solve!(f, x, y, α::Symbol; kwds...) = solve!(f, x, y, Val(α); kwds...)
@@ -197,8 +197,8 @@ function solve!(f, x, y, α::Real;
 end
 
 """
-    Amors.update!(Val(:x), f, x, y)
-    Amors.update!(Val(:y), f, x, y)
+    AMORS.update!(Val(:x), f, x, y)
+    AMORS.update!(Val(:y), f, x, y)
 
 respectively update variables `x` or `y` in-place and for the problem defined
 by `f`. When updating `x` (resp. `y`) variables `y` (resp. `x`) shall remain
@@ -208,7 +208,7 @@ unchanged.
 function update! end
 
 """
-    Amors.check_convergence(x, xp, tol) -> bool
+    AMORS.check_convergence(x, xp, tol) -> bool
 
 yields whether iterate `x` has converged. Argument `xp` is the previous value
 of `x` and `tol ≥ 0` is a relative tolerance. The result is given by:
@@ -229,8 +229,8 @@ function check_convergence(x::AbstractArray{T,N}, xp::AbstractArray{T,N},
 end
 
 """
-    Amors.scale!(x, α) -> x
-    Amors.scale!(α, x) -> x
+    AMORS.scale!(x, α) -> x
+    AMORS.scale!(α, x) -> x
 
 scale in-place the elements of the array `x` by the (unitless) factor `α`. If
 `α == zero(α)` holds, `x` is zero-filled so its values may be initially
@@ -254,7 +254,7 @@ function scale!(x::AbstractArray{T}, α::Number) where {T<:Number}
 end
 
 """
-    Amors.best_factor(λ⋅J(x), q, µ⋅K(y), r) -> α
+    AMORS.best_factor(λ⋅J(x), q, µ⋅K(y), r) -> α
 
 yields the best factor `α > 0` such that:
 

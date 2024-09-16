@@ -1,6 +1,6 @@
-using Amors
+using AMORS
 using Test
 
-@testset "Amors.jl" begin
+@testset "AMORS.jl" begin
     # Write your tests here.
 end
