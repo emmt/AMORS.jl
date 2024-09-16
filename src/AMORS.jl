@@ -275,7 +275,12 @@ and their respective degrees `deg(J)` and `deg(K)` for the current estimates of 
 variables `x` and `y` of a bilinear model.
 
 """
-best_scaling_factor(Jx::Real, degJ::Real, Ky::Real, degK::Real) =
-    ((degK*Ky)/(degJ*Jx))^(inv(degJ + degK))
+function best_scaling_factor(Jx::Number, degJ::Number, Ky::Number, degK::Number)
+    Jx > zero(Jx) || throw(DomainError(Jx, "`J(x) > 0` must hold"))
+    Ky > zero(Ky) || throw(DomainError(Ky, "`K(y) > 0` must hold"))
+    degJ > zero(degJ) || throw(DomainError(degJ, "`deg(J) > 0` must hold"))
+    degK > zero(degK) || throw(DomainError(degK, "`deg(K) > 0` must hold"))
+    return ((degK*Ky)/(degJ*Jx))^(inv(degJ + degK))
+end
 
 end
