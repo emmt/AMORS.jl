@@ -1,18 +1,17 @@
 """
 
-The `AMORS` module provides a framework to apply the AMORS algorithm described
-in:
+`AMORS` provides an implementation of the *Alternated Minimization using Optimal
+ReScaling* method described in:
 
-1. Samuel Thé, Éric Thiébaut, Loïc Denis, and Ferréol Soulez, "*Exploiting the
-   scaling indetermination of bi-linear models in inverse problems*", in 28th
-   European Signal Processing Conference (EUSIPCO), pp. 2358–2362 (2021).
-   [doi: 10.23919/Eusipco47968.2020.9287593]
+1. Samuel Thé, Éric Thiébaut, Loïc Denis, and Ferréol Soulez, "*Exploiting the scaling
+   indetermination of bi-linear models in inverse problems*", in 28th European Signal
+   Processing Conference (EUSIPCO), pp. 2358–2362 (2021)
+   [DOI](https://doi.org/10.23919/Eusipco47968.2020.9287593).
 
 2. Samuel Thé, Éric Thiébaut, Loïc Denis, and Ferréol Soulez, "*Unsupervised
-   blind-deconvolution with optimal scaling applied to astronomical data*", in
-   Adaptive Optics Systems VIII, International Society for Optics and Photonics
-   (SPIE), Vol. 12185 (2022).
-   [doi: 10.1117/12.2630245]
+   blind-deconvolution with optimal scaling applied to astronomical data*", in Adaptive
+   Optics Systems VIII, International Society for Optics and Photonics (SPIE), Vol. 12185
+   (2022) [DOI](https://doi.org/10.1117/12.2630245).
 
 """
 module AMORS
@@ -24,253 +23,259 @@ const default_xtol = 1e-4
 const default_maxiter = 1000
 
 """
-    AMORS.solve!(f, x, y, α = :auto) -> info, x, y
+    AMORS.solve(f, x0, y0) -> (status, x, y)
 
-solves regularized *bilinear model* estimation by AMORS method. Object `f`
-represents the objective function (see below). Arguments `x`, `y`, and `α` are
-respectively the initial variables and factor of the problem. The result is a
-3-tuple with the updated variables and `info` set so as to indicate the reason
-of the algorithm termination: `info = :convergence` if algorithm has converged
-within the given tolerances or `info = :too_many_iterations` if the algorithm
+Apply AMORS strategy out-of-place, that is leaving the intial variables `x0` and `y0`
+unchanged. See [`AMORS.solve!`](@ref) for a description of the method.
+
+Methods `Base.similar` and `Base.copyto!` must be applicable to objects of same types as
+`x0` and `y0`.
+
+"""
+solve(f, x0, y0; kwds...) = solve!(f, copy_variables(x0), copy_variables(y0); kwds...)
+
+# This method only requires that `Base.copyto!` and `Base.similar` be applicable to the
+# variables of the problem.
+copy_variables(x) = copyto!(similar(x), x)
+
+"""
+    AMORS.solve!(f, x, y) -> status, x, y
+
+Estimnate the components of a *bilinear model* by the AMORS method. The argument `f`
+represents the objective function (see below). On entry, arguments `x` and `y` are the
+initial variables of the problem, they are overwritten by the solution. The result is a
+3-tuple with the updated variables and `status` indicating the reason of the algorithm
+termination: `status = :convergence` if algorithm has converged in the variables `x` and
+`y` within the given tolerances or `status = :too_many_iterations` if the algorithm
 exceeded the maximum number of iterations.
 
-The objective of AMORS is to minimize in `x ∈ X` and `y ∈ Y` an objective
-function of the form:
+The objective of AMORS is to minimize in `x ∈ 𝕏` and `y ∈ 𝕐` an objective function of the
+form:
 
-    F(x,y) = G(x⋆y) + λ⋅J(x) + µ⋅K(y)
+    F(x,y) = G(x⊗y) + J(x) + K(y)
 
-where `G` is a function of the *bilinear model* `x⋆y`, `J` and `K` are positive
-homogeneous functions of the respective variables `x` and `y` while `λ > 0` and
-`µ > 0` are so-called hyper-parameters. The notation `x⋆y` denotes a *bilinear
-model* which has the following invariance property:
+where `G` is a function of the *bilinear model* `x⊗y`, `J` and `K` are positive
+homogeneous functions of the respective variables `x` and `y`. The notation `x⊗y` denotes
+a *bilinear model* which has the following invariance property:
 
-    (α⋅x)⋆(y/α) = x⋆y
+    (α*x)⊗(y/α) = x⊗y
 
-for any factor `α > 0`.
+for any scalar factor `α > 0`. An *homogeneous function*, say `J: 𝕏 → ℝ`, of degree `q` is
+such that `J(α*x) = abs(α)^q*J(x)` for any `α ∈ ℝ` and for any `x ∈ 𝕏` with `𝕏` the domain
+of `J`. It can be noted that the following property must hold `∀ α ∈ ℝ`: `x ∈ 𝕏` implies
+that `α*x ∈ 𝕏`. In other words, `𝕏` must be a cone.
 
-The object `f` collects any data, workspaces, information, etc. needed to deal
-with the objective function `F(x,y)`. This includes `X`, `Y`, `G`, `J`, `K`,
-`λ`, and `µ`.
+The argument `f` collects any data, workspaces, parameters, etc. needed to deal with the
+objective function `F(x,y)`. This includes `𝕏`, `𝕐`, `G`, `J`, and `K`. The argument `f`
+must be a callable object which is called as:
 
-Note that thanks to the properties guaranteed by AMORS, the shapes of the
- components `x` and `y` depend on the tuning of only one of hyper-parameter
- (`λ` or `µ`, for instance).
+    f(task, x, y)
 
-The AMORS algorithm requires that methods `AMORS.update!` and
-`AMORS.best_factor` be specialized for the types of `f`, `x`, and `y` so that:
+where `task` is `Val(:x)` or `Val(:y)` to update this component:
 
-    AMORS.update!(Val(:x), f, x, y) ≈ min_{x ∈ X} F(x,y)
-    AMORS.update!(Val(:y), f, x, y) ≈ min_{y ∈ Y} F(x,y)
+    f(Val(:x), x, y) -> argmin_{x ∈ 𝕏} F(x, y) = argmin_{x ∈ 𝕏} G(x⊗y) + J(x)
+    f(Val(:y), x, y) -> argmin_{y ∈ 𝕐} F(x, y) = argmin_{y ∈ 𝕐} G(x⊗y) + K(y)
 
-respectively update in-place the component `x` and `y` of the model and so
-that:
+while `task` is `Val(:alpha)` to yield the optimal scaling `α > 0`:
 
-    AMORS.best_factor(f, x, y) -> α
+    f(Val(:alpha), x, y) -> argmin_{α > 0} F(α*x, y/α) = argmin_{α > 0} J(α*x) + K(y/α)
 
-yields the optimal value of the factor `α` such that `F(α⋅x,y/α)` is minimized
-in `α`. As a helper, this latter method can be called as:
+The solution of `argmin_{x ∈ 𝕏} F(x, y)` and `argmin_{y ∈ 𝕐} F(x, y)` may not be exact and
+may be computed in-place to save storage, that is `x` (resp. `y`) being overwritten by the
+solution. For type stability of the algorithm, `f(Val(:x),x,y)::typeof(x)` and
+`f(Val(:y),x,y)::typeof(y)` must hold.
 
-    AMORS.best_factor(λ⋅J(x), q, µ⋅K(y), r)
+The solution of `argmin_{α > 0} F(α*x, y/α)` has a closed-form expression:
 
-to compute the best factor `α` given the current values of the terms `λ⋅J(x)`
-and `µ⋅K(y)` and the homogeneous degrees `q` and `r` of the functions `J` and
-`K` respectively. The initial factor `α` may be a value, or one of the symbolic
-names `:auto` or `:const`. If a value is specified, it is used to scale the
-initial variables and the best factor is used for every other iteration. If
-`:auto` is specified `AMORS.best_factor(f,x,y)` is always called to compute the
-factor `α` (initially and at every iteration). If `:const` is specified, a
-constant factor `α = 1` is always used (initially and at every iteration). This
-latter possibility is not recommended, it is only useful for testing purposes.
+    argmin_{α > 0} F(α*x, y/α) = ((deg(K)*K(y))/(deg(J)*J(x)))^(inv(deg(J) + deg(K)))
 
-Note that the `AMORS.update!` method is always called with the current
-(possibly pre-scaled) variables. This may be exploited to accelerate the
-updating by not starting from scratch.
+where `deg(J)` denotes the degree of the homogeneous function `J`. This solution can be
+computed by calling [`AMORS.best_scaling_factor`](@ref).
 
-Arguments `x` and `y` are needed to define the variables. Initially, they must
-be such that `J(x) > 0` and `K(y) > 0` if the factor `α` is automatically
-computed.
+Arguments `x` and `y` are needed to define the variables. Initially, they must be such
+that `J(x) > 0` and `K(y) > 0` unless automatic best rescaling is disabled by
+`do_not_scale=true` (which is not recommended).
 
 The following keywords can be specified:
 
-- `first` is a symbolic name which specifies which of `:x` or `:y` (the
-  default) to update the first given the other.
+- `first` is one of `Val(:x)` or `Val(:y)` (the default) to specify which component to
+  update the first given the other.
 
-- `atol` is a relative tolerance ($default_atol by default) to assert the
-  convergence in the factor `α`.
+- `atol` is a relative tolerance ($default_atol by default) to assert the convergence in
+  the factor `α`.
 
-- `xtol` is a relative tolerance ($default_xtol by default) to assert the
-  convergence in the variables `x`.
+- `xtol` is a relative tolerance ($default_xtol by default) to assert the convergence in
+  the variables `x`.
 
-- `ytol` is a relative tolerance (`xtol` by default) to assert the convergence
-  in the variables `y`.
+- `ytol` is a relative tolerance (`xtol` by default) to assert the convergence in the
+  variables `y`.
 
-- `maxiter` is the maximum number of algorithm iterations ($default_maxiter by
-  default).
+- `maxiter` is the maximum number of algorithm iterations (`$default_maxiter` by default).
 
-- `conv` is a function used to check for convergence of the iterates
-  (`AMORS.check_convergence` by default).
+- `has_converged` is a function used to check for convergence of the iterates
+  ([`AMORS.has_converged`](@ref) by default).
+
+- `do_not_scale` may be set to `true` (default is `false`) to not scale the components `x`
+  and `y` of the problem. This keyword is provided for testing the efficiency of the AMORS
+  strategy, it is recommended to not use it.
 
 """
-solve!(f, x, y, α::Symbol; kwds...) = solve!(f, x, y, Val(α); kwds...)
-
-solve!(f, x, y, α::Val{:auto} = Val(:auto); kwds...) =
-    solve!(f, x, y, best_factor(f, x, y); kwds...)
-
-solve!(f, x, y, α::Val{:const}; kwds...) =
-    solve!(f, x, y, 1.0; keep_α_fixed = true, kwds...)
-
-# Catch errors:
-solve!(f, x, y, ::Val{α}; kwds...) where {α} =
-    throw(ArgumentError("invalid value `:$α` for parameter `α`"))
-
-function solve!(f, x, y, α::Real;
-                keep_α_fixed::Bool = false, # NOTE: change this option at your own risk!
-                first::Symbol = :y,
+function solve!(f, x, y;
+                first::Val = Val(:y),
                 atol::Real = default_atol,
                 xtol::Real = default_xtol,
                 ytol::Real = xtol,
                 maxiter::Integer = default_maxiter,
-                conv::Function = check_convergence)
-    keep_α_fixed && !isone(α) && throw(ArgumentError("initial value of `α` must be 1"))
-    α > zero(α) || throw(ArgumentError("initial value of `α` must be strictly positive"))
-    first ∈ (:x, :y) || throw(ArgumentError("value of keyword `first` must be `:x` or `:y`"))
+                has_converged = AMORS.has_converged,
+                observer = nothing,
+                do_not_scale::Bool = false)
+    # Check keywords.
+    first ∈ (Val(:x), Val(:y)) || throw(ArgumentError("bad value for keyword `first`, must be `Val(:x)` or `Val(:y)`"))
     zero(atol) < atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `(0,1)`"))
     zero(xtol) < xtol < one(xtol) || throw(ArgumentError("value of keyword `xtol` must be in `(0,1)`"))
     zero(ytol) < ytol < one(ytol) || throw(ArgumentError("value of keyword `ytol` must be in `(0,1)`"))
     maxiter ≥ 0 || throw(ArgumentError("value of keyword `maxiter` must be nonnegative"))
-    x0 = similar(x)
-    y0 = similar(y)
+
+    # Initialize algorithm.
     iter = 0
-    info = :work_in_progress
-    α = Float64(α) # ensure type-stability
-    while true # outer loop
-        # Apply (initial or best) scaling factor.
-        if α != one(α)
-            scale!(x, α)
-            scale!(y, one(α)/α)
-        end
+    xp = similar(x)
+    yp = similar(y)
+    status = :searching
+    while true
+        # Inspect iterate if requested.
+        observer === nothing || observer(iter, f, x, y)
 
         # Check for convergence.
-        if iter ≥ 1 && conv(x, x0, xtol) && conv(y, y0, ytol)
-            info = :convergence
+        if iter > 1 && has_converged(x, xp, xtol) && has_converged(y, yp, ytol)
+            status = :convergence # convergence in the variables
             break
         elseif iter ≥ maxiter
-            info = :too_many_iterations
+            status = :too_many_iterations # too many iterations
             break
         end
 
-        # Save variables before their updating by this iteration.
-        copyto!(y0, y)
-        copyto!(x0, x)
+        # Memorize the components of the problem before updating.
+        copyto!(xp, x)
+        copyto!(yp, y)
 
-        # Update first component given the orther, compute resulting best
-        # scaling factor and apply it. If this is the first iteration, repeat
-        # this step until the value of the best scaling factor converges.
-        while true # inner loop
-            if first === :y
-                update!(Val(:y), f, x, y)
+        # Update first component and re-scale. If this is the initial iteration, repeat
+        # until convergence in the scaling factor.
+        while true
+            if first === Val(:x)
+                x = f(Val(:x), x, y)::typeof(x)
             else
-                update!(Val(:x), f, x, y)
+                y = f(Val(:y), x, y)::typeof(y)
             end
-            keep_α_fixed && break
-            α = Float64(best_factor(f, x, y))
-            if α != one(α)
-                scale!(x, α)
-                scale!(y, one(α)/α)
+            do_not_scale && break
+            α = apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
+            if iter ≥ 1 || abs(α - one(α)) ≤ atol
+                break
             end
-            (iter > 0 || abs(α - one(α)) ≤ atol) && break
-        end # inner loop
+        end
 
-        # Update other component, compute resulting best scaling factor, and
-        # proceed with next iterationq.
-        if first === :y
-            update!(Val(:x), f, x, y)
+        # Update second component and re-scale.
+        if first === Val(:x)
+            y = f(Val(:y), x, y)::typeof(y)
         else
-            update!(Val(:y), f, x, y)
+            x = f(Val(:x), x, y)::typeof(x)
         end
-        if keep_α_fixed == false
-            α = Float64(best_factor(f, x, y))
-        end
+        do_not_scale || apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
+
+        # Iteration completed.
         iter += 1
-    end # outer loop
-    return info, x, y
+    end
+    return status, x, y
 end
 
 """
-    AMORS.update!(Val(:x), f, x, y)
-    AMORS.update!(Val(:y), f, x, y)
+    AMORS.has_converged(x, xp, tol) -> bool
 
-respectively update variables `x` or `y` in-place and for the problem defined
-by `f`. When updating `x` (resp. `y`) variables `y` (resp. `x`) shall remain
-unchanged.
+yields whether the variables `x` has converged. Argument `xp` is the previous value of `x`
+and `tol ≥ 0` is a relative tolerance.
 
-"""
-function update! end
-
-"""
-    AMORS.check_convergence(x, xp, tol) -> bool
-
-yields whether iterate `x` has converged. Argument `xp` is the previous value
-of `x` and `tol ≥ 0` is a relative tolerance. The result is given by:
+In the default implementation provided by `AMORS` for `x` and `xp` being arrays, the
+result is given by:
 
     ‖x - xp‖ ≤ tol⋅‖x‖
 
 with `‖x‖` the Euclidean norm of `x`.
 
+The method is expected to be extended for non-array types of `x` and `xp`. Another
+possibility is to specify the keyword `has_converged` in the call to [`AMORS.solve`](@ref)
+or [`AMORS.solve!`](@ref).
+
 """
-function check_convergence(x::AbstractArray{T,N}, xp::AbstractArray{T,N},
-                           tol::Real) where {T,N}
-    a = b = abs2(zero(T))
+function has_converged(x::AbstractArray, xp::AbstractArray, tol::Real)
+    axes(x) == axes(xp) || throw(DimensionMismatch("arrays must have the same axes"))
+    s = abs2(zero(eltype(x)))
+    d = abs2(zero(eltype(x)) - zero(eltype(xp)))
     @inbounds @simd for i in eachindex(x, xp)
-        a += abs2(x[i] - xp[i])
-        b += abs2(x[i])
+        s += abs2(x[i])
+        d += abs2(x[i] - xp[i])
     end
-    return sqrt(a) ≤ tol*sqrt(b)
+    return sqrt(d) ≤ tol*sqrt(s)
 end
 
 """
-    AMORS.scale!(x, α) -> x
-    AMORS.scale!(α, x) -> x
+    AMORS.scale!(x, α::Real) -> x
+    AMORS.scale!(α::Real, x) -> x
 
-scale in-place the elements of the array `x` by the (unitless) factor `α`. If
-`α == zero(α)` holds, `x` is zero-filled so its values may be initially
-undefined.
+Multiply in-place the entries of `x` by the scalar `α` and return `x`. Whatever the values
+of the entries of `x`, nothing is done if `α = 1` and `x` is zero-filled if `α = 0`.
+
+The `AMORS` package provides a default implementation of the method that is applicable to
+any abstract array `x`. The method is expected to be extended for other types of argument
+`x`.
+
+See also `LinearAlgebra.lmul!(α::Number,x::AbstractArray)` and
+`LinearAlgebra.rmul!(x::AbstractArray,α::Number)`.
 
 """
-scale!(α::Number, x::AbstractArray{T}) where {T<:Number} = scale!(x, α)
-function scale!(x::AbstractArray{T}, α::Number) where {T<:Number}
+scale!(x::AbstractArray, α::Number, ) = scale!(x, α)
+function scale!(α::Real, x::AbstractArray)
     if iszero(α)
-        z = zero(T)
+        fill!(x, zero(eltype(x)))
+    else !isone(α)
+        α = convert_floating_point_type(eltype(x), α)
         @inbounds @simd for i in eachindex(x)
-            x[i] = z
-        end
-    elseif !isone(α)
-        a = convert_floating_point_type(T, α)
-        @inbounds @simd for i in eachindex(x)
-            x[i] *= a
+            x[i] *= α
         end
     end
     return x
 end
 
 """
-    AMORS.best_factor(λ⋅J(x), q, µ⋅K(y), r) -> α
+    AMORS.apply_scaling_factor!(α::Real, x, y) -> α
 
-yields the best factor `α > 0` such that:
-
-    λ⋅J(α⋅x) + µ⋅K(y/α) = α^q⋅λ⋅J(x) + µ⋅K(y)/α^r
-
-is minimized in `α`. Arguments are the current values of the terms `λ⋅J(x)` and
-`µ⋅K(y)` and the homogeneous degrees `q` and `r` of the fucntions `J` and `K`
-respectively. This problem has the following closed-form solution:
-
-    α = ((r⋅µ⋅K(y))/(q⋅λ⋅J(x)))^(1/(q + r))
-
-which is returned by this function.
+Multiply in-place the entries of `x` by the scalar `α` and the entries of `y` by `inv(α)`.
+Return `α`. See [`AMORS.scale!`](@ref).
 
 """
-best_factor(args::Vararg{Real,4}) = best_factor(map(Float64, args)...)
-best_factor(λJx::Float64, q::Float64, µKy::Float64, r::Float64) =
-    ((r*µKy)/(q*λJx))^(1.0/(q + r))
+function apply_scaling_factor!(α::Real, x, y)
+    if !isone(α)
+        scale!(α, x)
+        scale!(inv(α), y)
+    end
+    return α
+end
+
+"""
+    AMORS.best_scaling_factor(J(x), deg(J), K(y), deg(K)) -> α⁺
+
+yields the best scaling factor defined by:
+
+    α⁺ = argmin_{α > 0} J(α*x) + K(y/α)
+
+and which has a closed-form expression:
+
+    α⁺ = ((deg(K)*K(y))/(deg(J)*J(x)))^(1/(deg(J) + deg(K)))
+
+The arguments are the values of the homogeneous objective functions, `J(x)` and `K(y)`,
+and their respective degrees `deg(J)` and `deg(K)` for the current estimates of the
+variables `x` and `y` of a bilinear model.
+
+"""
+best_scaling_factor(Jx::Real, degJ::Real, Ky::Real, degK::Real) =
+    ((degK*Ky)/(degJ*Jx))^(inv(degJ + degK))
 
 end
