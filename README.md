@@ -1,6 +1,8 @@
-# A Julia framework to apply the AMORS algorithm
+# The AMORS algorithm in Julia
 
 [![Build Status](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/emmt/AMORS.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/emmt/AMORS.jl)
+
+## Description
 
 This Julia package provides an implementation of the `AMORS` algorithm (for *Alternated
 Minimization using Optimal ReScaling*) for estimating the components `x` and `y` of a
@@ -35,6 +37,9 @@ Typically, `AMORS` is suitable to solve estimation problems where the unknowns, 
 the observations) while `J(x)` and `K(y)` are regularization terms implementing a priori
 constraints in the components.
 
+
+## References
+
 The `AMORS` algorithm is described in:
 
 1. Samuel Thé, Éric Thiébaut, Loïc Denis, and Ferréol Soulez, "*Exploiting the scaling
@@ -46,3 +51,9 @@ The `AMORS` algorithm is described in:
    blind-deconvolution with optimal scaling applied to astronomical data*", in Adaptive
    Optics Systems VIII, International Society for Optics and Photonics (SPIE), Vol. 12185
    (2022) [DOI](https://doi.org/10.1117/12.2630245).
+
+
+## Examples
+
+An example of usage with a rank-1 bilinear model is provided in
+[`src/rank1.jl`](src/rank1.jl) and is tested in [`test/rank1tests.jl`](test/rank1tests.jl).
