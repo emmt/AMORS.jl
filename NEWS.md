@@ -5,6 +5,9 @@
 - The `do_not_scale` keyword has been replaced by an `autoscale` keyword with opposite
   meaning.
 
+- The `atol` keyword has been renamed `αtol`.
+
+
 ## Version 0.2.0
 
 The API has been simplified and type stability has been improved. This introduces a number

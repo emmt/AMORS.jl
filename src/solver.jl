@@ -1,4 +1,4 @@
-const default_atol = 0.3
+const default_αtol = 0.3
 const default_xtol = 1e-4
 const default_maxiter = 1000
 
@@ -81,7 +81,7 @@ The following keywords can be specified:
 - `first` is one of `Val(:x)` or `Val(:y)` (the default) to specify which component to
   update the first given the other.
 
-- `atol ∈ [0,1)` is a relative tolerance (`$default_atol` by default) to assert the
+- `αtol ∈ [0,1)` is a relative tolerance (`$default_αtol` by default) to assert the
   convergence in the factor `α`.
 
 - `xtol ∈ [0,1)` is a relative tolerance (`$default_xtol` by default) to assert the
@@ -102,7 +102,7 @@ The following keywords can be specified:
 """
 function solve!(f, x, y;
                 first::Val = Val(:y),
-                atol::Real = default_atol,
+                αtol::Real = default_αtol,
                 xtol::Real = default_xtol,
                 ytol::Real = xtol,
                 maxiter::Integer = default_maxiter,
@@ -111,7 +111,7 @@ function solve!(f, x, y;
                 autoscale::Bool = true)
     # Check keywords.
     first ∈ (Val(:x), Val(:y)) || throw(ArgumentError("bad value for keyword `first`, must be `Val(:x)` or `Val(:y)`"))
-    zero(atol) ≤ atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `[0,1)`"))
+    zero(αtol) ≤ αtol < one(αtol) || throw(ArgumentError("value of keyword `αtol` must be in `[0,1)`"))
     zero(xtol) ≤ xtol < one(xtol) || throw(ArgumentError("value of keyword `xtol` must be in `[0,1)`"))
     zero(ytol) ≤ ytol < one(ytol) || throw(ArgumentError("value of keyword `ytol` must be in `[0,1)`"))
     maxiter ≥ 0 || throw(ArgumentError("value of keyword `maxiter` must be nonnegative"))
@@ -148,7 +148,7 @@ function solve!(f, x, y;
             end
             autoscale || break
             α = apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
-            if iter ≥ 1 || abs(α - one(α)) ≤ atol
+            if iter ≥ 1 || abs(α - one(α)) ≤ αtol
                 break
             end
         end
