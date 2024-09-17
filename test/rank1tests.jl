@@ -1,8 +1,7 @@
 module RankOneTest
 
+using Test
 using AMORS
-using PythonPlot
-const plt = PythonPlot
 
 bestscale(x, xref) = sum(x.*xref)/sum(x.*x)
 
@@ -32,24 +31,18 @@ x0, y0 = model(z)
 
 f = AMORS.RankOneProblem(z)
 
-println("\n# Testing with `autoscale=true`, `first=Val(:x)`")
-(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
-                           observer=AMORS.observer, maxiter=500, autoscale=true,
-                           xtol=1e-7, first=Val(:x));
+io = stdout
 
-println("\n# Testing with `autoscale=false`, `first=Val(:x)`")
-(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
-                           observer=AMORS.observer, maxiter=500, autoscale=false,
-                           xtol=1e-7, first=Val(:x));
+opts = (; io=io, observer=AMORS.observer, maxiter=200, xtol=1e-7)
 
-println("\n# Testing with `autoscale=true`, `first=Val(:y)`")
-(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
-                           observer=AMORS.observer, maxiter=500, autoscale=true,
-                           xtol=1e-7, first=Val(:y));
+@testset "Solvers (autoscale = $(autoscale), first = Val(:$(xy)))" for xy in (:x, :y),
+    autoscale in (true, false)
 
-println("\n# Testing with `autoscale=false`, `first=Val(:y)`")
-(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
-                           observer=AMORS.observer, maxiter=500, autoscale=false,
-                           xtol=1e-7, first=Val(:y));
+    println(io, "\n# Testing with `autoscale = $(autoscale)` and `first = Val(:$(xy))`")
+    (info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0; opts...,
+                               autoscale, first=Val(xy));
+    println(io, "# Final status: ", info.status)
+    @test info.status ∈ (autoscale ? (:convergence,) : (:convergence, :too_many_iterations))
+end
 
 end # module RankOneTest

@@ -49,4 +49,7 @@ using Test
             @test AMORS.best_scaling_factor(Ky, degK, Jx, degJ) ≈ inv(alpha)
         end
     end
+
+    include("rank1tests.jl")
+
 end
