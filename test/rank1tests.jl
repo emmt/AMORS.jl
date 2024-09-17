@@ -5,7 +5,7 @@ using PythonPlot
 const plt = PythonPlot
 
 bestscale(x, xref) = sum(x.*xref)/sum(x.*x)
-observer(info, f, x, y) = println(info.iter, " / ", info.eval, " -> ", AMORS.objective_function(info))
+
 contrast(A::AbstractArray) = (x = extrema(A); float(x[2]) - float(x[1]))
 noisify(A::AbstractArray, snr) =
     (contrast(A)/snr).*randn(eltype(A), size(A)) + A
@@ -32,6 +32,24 @@ x0, y0 = model(z)
 
 f = AMORS.RankOneProblem(z)
 
-#(info, x, y) = AMORS.solve(f,x0,y0; observer, maxiter=50,autoscale=true,xtol=1e-7,first=Val(:x));
+println("\n# Testing with `autoscale=true`, `first=Val(:x)`")
+(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
+                           observer=AMORS.observer, maxiter=500, autoscale=true,
+                           xtol=1e-7, first=Val(:x));
+
+println("\n# Testing with `autoscale=false`, `first=Val(:x)`")
+(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
+                           observer=AMORS.observer, maxiter=500, autoscale=false,
+                           xtol=1e-7, first=Val(:x));
+
+println("\n# Testing with `autoscale=true`, `first=Val(:y)`")
+(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
+                           observer=AMORS.observer, maxiter=500, autoscale=true,
+                           xtol=1e-7, first=Val(:y));
+
+println("\n# Testing with `autoscale=false`, `first=Val(:y)`")
+(info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0;
+                           observer=AMORS.observer, maxiter=500, autoscale=false,
+                           xtol=1e-7, first=Val(:y));
 
 end # module RankOneTest

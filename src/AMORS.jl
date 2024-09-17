@@ -16,6 +16,7 @@ ReScaling* method described in:
 """
 module AMORS
 
+using Printf
 using TypeUtils
 
 include("types.jl")

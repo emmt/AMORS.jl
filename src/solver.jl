@@ -295,6 +295,30 @@ function has_converged(x::AbstractArray, xp::AbstractArray, tol::Real)
 end
 
 """
+    AMORS.observer(info, f, x, y, io = stdout)
+
+Observer that can be used in [`AMORS.solve`](@ref) or [`AMORS.solve!`](@ref).
+
+"""
+function observer(info::Info, f, x, y, io::IO = stdout)
+    iter = info.iter
+    eval = info.eval
+    Fxy = objective_function(info)
+    α = info.α
+    αbest = try
+        best_scaling_factor(info)
+    catch
+        NaN
+    end
+    if iter == 1
+        println(io, "#  ITER  EVAL          OBJFUN             ALPHA    BEST_ALPHA")
+        println(io, "# -----------------------------------------------------------")
+    end
+    @printf io "  %5d %5d %23.15e %11.3e %11.3e\n" iter eval Fxy α αbest
+    nothing
+end
+
+"""
     AMORS.scale!(x, α::Real) -> x
     AMORS.scale!(α::Real, x) -> x
 
