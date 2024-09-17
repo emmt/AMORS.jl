@@ -8,7 +8,8 @@
 
 - The API has changed (again) for the object representing the problem.
 
-- The observer method can return a symbolic value to terminate the algorithm.
+- The observer method can return a symbolic value other than `:searching` to terminate the
+  algorithm.
 
 - The solver returns a structured `info` object with much more information (not just the
   status). See the documentation about `AMORS.Info`. The same object is provided as the
@@ -18,6 +19,11 @@
   incremented for each update of any component of the model. The initial updates on one of
   the components to initialize `α` count as one iteration. The total number of updates is
   given by `info.eval`.
+
+- `AMORS.observer` provides an example of observer that can be used by the solvers.
+
+- The observer also takes an i/o stream as argument which can be specified by the `io`
+  keyword in the solvers.
 
 
 ## Version 0.2.1

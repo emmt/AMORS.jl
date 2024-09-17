@@ -121,10 +121,14 @@ The following keywords can be specified:
   ([`AMORS.has_converged`](@ref) by default).
 
 - `observer` is a user-defined function called after ever iteration as
-  `observer(info,f,x,y)`. This function may return a symbolic status, if this status is
-  not `:searching`, then the algorithm will be terminated and the resulting `info` will be
-  set with this status. If the value returned by this function is ignored if it is not a
-  `Symbol`.
+  `observer(io,info,f,x,y)` with `io` the stream set by the corresponding keyword, `info`
+  an instance of [`AMORS.Info`](@ref) with the current state of the algorithm, `f` the
+  object defining the problem, and `x` and `y` the current estimates of the model
+  components. This function may return a symbolic status, if this status is not
+  `:searching`, then the algorithm will be terminated and the resulting `info` will be set
+  with this status. The value returned by the observer is ignored if it is not a `Symbol`.
+
+- `io` the stream for the observer, `stdout` by default.
 
 """
 function solve!(f, x, y;
@@ -141,7 +145,8 @@ function solve!(f, x, y;
                 ytol::Real = xtol,
                 maxiter::Integer = default_maxiter,
                 has_converged = AMORS.has_converged,
-                observer = nothing)
+                observer = nothing,
+                io::IO = stdout)
     # Check keyword values.
     first ∈ (Val(:x), Val(:y)) || throw(ArgumentError("keyword `first` must be `Val(:x)` or `Val(:y)`"))
     isconcretetype(Float) || throw(ArgumentError("keyword `Float` must be a concrete type, got `$Float`"))
@@ -193,14 +198,14 @@ function solve!(f, x, y;
 
     # Dispatch on types for other iterations.
     return solve!(f, x, y, update_x, α, autoscale, Gxy, μ, Jx, q, ν, Ky, r,
-                  αtol, xtol, ytol, maxiter, has_converged, observer)
+                  αtol, xtol, ytol, maxiter, has_converged, observer, io)
 end
 
 function solve!(f, x, y, update_x::Bool, α::Float, autoscale::Bool, Gxy::Number,
                 μ::Number, Jx::Number, q::Union{Int,Float},
                 ν::Number, Ky::Number, r::Union{Int,Float},
                 αtol::Float, xtol::Float, ytol::Float,
-                maxiter::Int, has_converged, observer) where {Float<:AbstractFloat}
+                maxiter::Int, has_converged, observer, io::IO) where {Float<:AbstractFloat}
     xprev = similar(x)
     yprev = similar(y)
     status = :searching
@@ -240,7 +245,7 @@ function solve!(f, x, y, update_x::Bool, α::Float, autoscale::Bool, Gxy::Number
             y_has_converged = has_converged(y, yprev, ytol)
         end
         if observer !== nothing
-            rv = observer(Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status), f, x, y)
+            rv = observer(io, Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status), f, x, y)
             if rv isa Symbol && rv !== status
                 # Observer has requested the algorithm to terminate.
                 status = rv
@@ -295,12 +300,12 @@ function has_converged(x::AbstractArray, xp::AbstractArray, tol::Real)
 end
 
 """
-    AMORS.observer(info, f, x, y, io = stdout)
+    AMORS.observer(io, info, f, x, y)
 
 Observer that can be used in [`AMORS.solve`](@ref) or [`AMORS.solve!`](@ref).
 
 """
-function observer(info::Info, f, x, y, io::IO = stdout)
+function observer(io::IO, info::Info, f, x, y)
     iter = info.iter
     eval = info.eval
     Fxy = objective_function(info)
