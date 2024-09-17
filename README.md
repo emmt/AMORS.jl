@@ -37,6 +37,24 @@ Typically, `AMORS` is suitable to solve estimation problems where the unknowns, 
 the observations) while `J(x)` and `K(y)` are regularization terms implementing a priori
 constraints in the components.
 
+The `AMORS` algorithm has the following benefits over other methods such as alternating
+optimization in the variables `x` and `y`:
+
+- `AMORS` is not slower and usually much faster than the alternating method and its
+  convergence rate does not depend on the scaling of the initial variables (`x` or `y`);
+
+- With `AMORS` the tuning of the hyperparameters `μ` and `ν` is easier since the result
+  only depend on some averaging of `μ` and `ν` so only one hyperparameter really needs to
+  be tuned.
+
+To benefit from `AMORS` algorithm, the user mostly has to provide code to solve the
+following two sub-problems:
+
+``` julia
+x⁺ ≈ argmin_{x ∈ 𝕏} G(x⊗y) + μ*J(x)
+y⁺ ≈ argmin_{y ∈ 𝕐} G(x⊗y) + ν*K(y)
+```
+
 
 ## References
 
