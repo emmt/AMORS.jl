@@ -283,4 +283,7 @@ function best_scaling_factor(Jx::Number, degJ::Number, Ky::Number, degK::Number)
     return ((degK*Ky)/(degJ*Jx))^inv(degJ + degK)
 end
 
-end
+include("rank1.jl")
+import .RankOne: RankOneProblem
+
+end # module AMORS
