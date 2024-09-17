@@ -74,7 +74,7 @@ computed by calling [`AMORS.best_scaling_factor`](@ref).
 
 Arguments `x` and `y` are needed to define the variables. Initially, they must be such
 that `J(x) > 0` and `K(y) > 0` unless automatic best rescaling is disabled by
-`do_not_scale=true` (which is not recommended).
+`autoscale = false` (which is not recommended).
 
 The following keywords can be specified:
 
@@ -95,9 +95,9 @@ The following keywords can be specified:
 - `has_converged` is a function used to check for convergence of the iterates
   ([`AMORS.has_converged`](@ref) by default).
 
-- `do_not_scale` may be set to `true` (default is `false`) to not scale the components `x`
-  and `y` of the problem. This keyword is provided for testing the efficiency of the AMORS
-  strategy, it is recommended to not use it.
+- `autoscale` specifies whether to automatically set the scaling factor `α`. By default,
+  `autoscale = true`. This keyword is provided for testing the efficiency of the `AMORS`
+  algorithm, it is recommended to not disable autoscaling.
 
 """
 function solve!(f, x, y;
@@ -108,7 +108,7 @@ function solve!(f, x, y;
                 maxiter::Integer = default_maxiter,
                 has_converged = AMORS.has_converged,
                 observer = nothing,
-                do_not_scale::Bool = false)
+                autoscale::Bool = true)
     # Check keywords.
     first ∈ (Val(:x), Val(:y)) || throw(ArgumentError("bad value for keyword `first`, must be `Val(:x)` or `Val(:y)`"))
     zero(atol) ≤ atol < one(atol) || throw(ArgumentError("value of keyword `atol` must be in `[0,1)`"))
@@ -146,7 +146,7 @@ function solve!(f, x, y;
             else
                 y = f(Val(:y), x, y)::typeof(y)
             end
-            do_not_scale && break
+            autoscale || break
             α = apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
             if iter ≥ 1 || abs(α - one(α)) ≤ atol
                 break
@@ -159,7 +159,7 @@ function solve!(f, x, y;
         else
             x = f(Val(:x), x, y)::typeof(x)
         end
-        do_not_scale || apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
+        autoscale && apply_scaling_factor!(f(Val(:alpha), x, y), x, y)
 
         # Iteration completed.
         iter += 1

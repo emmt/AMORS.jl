@@ -1,5 +1,10 @@
 # User visible changes in `AMORS` package
 
+## Version 0.2.1
+
+- The `do_not_scale` keyword has been replaced by an `autoscale` keyword with opposite
+  meaning.
+
 ## Version 0.2.0
 
 The API has been simplified and type stability has been improved. This introduces a number
