@@ -5,11 +5,11 @@ using PythonPlot
 const plt = PythonPlot
 
 bestscale(x, xref) = sum(x.*xref)/sum(x.*x)
-observer(iter::Int, f, x, y) = println(iter, " -> ", f(Val(:obj),x,y))
+observer(info, f, x, y) = println(info.iter, " / ", info.eval, " -> ", AMORS.objective_function(info))
 contrast(A::AbstractArray) = (x = extrema(A); float(x[2]) - float(x[1]))
 noisify(A::AbstractArray, snr) =
     (contrast(A)/snr).*randn(eltype(A), size(A)) + A
-model(x::AbstractVector, y::AbstractVEctor) = x .* y'
+model(x::AbstractVector, y::AbstractVector) = x .* y'
 function model(z::AbstractMatrix)
     x0 = sum(z; dims=2)[:,1];
     y0 = sum(z; dims=1)[1,:];
@@ -30,8 +30,8 @@ zgt = xgt .* ygt';
 z = noisify(zgt, 8)
 x0, y0 = model(z)
 
-f = AMORS.RankOneProblem(z, x0, y0; μ=1.0, ν=1.0)
+f = AMORS.RankOneProblem(z)
 
-#(status, x, y) = AMORS.solve(f,x0,y0; observer, maxiter=50,do_not_scale=false,xtol=1e-7,first=Val(:x));
+#(info, x, y) = AMORS.solve(f,x0,y0; observer, maxiter=50,autoscale=true,xtol=1e-7,first=Val(:x));
 
 end # module RankOneTest

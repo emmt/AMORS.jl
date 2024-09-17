@@ -18,6 +18,7 @@ module AMORS
 
 using TypeUtils
 
+include("types.jl")
 include("solver.jl")
 include("rank1.jl")
 import .RankOne: RankOneProblem

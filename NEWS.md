@@ -1,5 +1,25 @@
 # User visible changes in `AMORS` package
 
+## Version 0.3.0
+
+- New version of the AMORS algorithm more in-line with the EUSIPCO (2021) paper including
+  the notation of the variables. Compared to the 0.2 version, directly scaling the
+  variables is avoided in favor of scaling the hyperparameters.
+
+- The API has changed (again) for the object representing the problem.
+
+- The observer method can return a symbolic value to terminate the algorithm.
+
+- The solver returns a structured `info` object with much more information (not just the
+  status). See the documentation about `AMORS.Info`. The same object is provided as the
+  first argument of the observer (instead of just the iteration counter).
+
+- Iteration counting has changed. The iteration counter, given by `info.iter`, is
+  incremented for each update of any component of the model. The initial updates on one of
+  the components to initialize `α` count as one iteration. The total number of updates is
+  given by `info.eval`.
+
+
 ## Version 0.2.1
 
 - The `do_not_scale` keyword has been replaced by an `autoscale` keyword with opposite

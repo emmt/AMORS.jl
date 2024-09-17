@@ -17,85 +17,71 @@ Build an object representing a problem with a bilinear model given by a rank-1 m
 where `z` is the input data.
 
 """
-mutable struct RankOneProblem{T}
+mutable struct RankOneProblem{T<:AbstractFloat}
     z::Matrix{T}
-    μ::Float64
-    ν::Float64
-    Fxy::Float64
-    Gxy::Float64
-    Jx::Float64
-    Ky::Float64
-    function RankOneProblem(z::AbstractMatrix, x::AbstractVector, y::AbstractVector; μ::Number, ν::Number)
-        T = floating_point_type(eltype(z), eltype(x), eltype(y))
-        f = new{T}(z, μ, ν, NaN, NaN, NaN, NaN)
-        f(Val(:obj), x, y)
-        return f
+    function RankOneProblem(z::AbstractMatrix{<:Real})
+        T = float(eltype(z))
+        return new{T}(z)
     end
 end
 
-# Compute objective function.
-function (f::RankOneProblem)(::Val{:obj}, x::AbstractVector, y::AbstractVector)
+# Compute `G(x⊗y)`.
+function (f::RankOneProblem)(::Val{:Gxy}, x::AbstractVector, y::AbstractVector)
     # Extract sizes and check.
     z = f.z
     (I, J) = axes(z)
     @assert axes(x) == (I,)
     @assert axes(y) == (J,)
 
-    # Compute data fidelity term.
-    Gxy = zero(Float64)
+    Gxy = abs2(zero(eltype(z)) - zero(eltype(x))*zero(eltype(y)))
     @inbounds for j in J
-        s = zero(Float64)
+        s = zero(Gxy)
         for i in I
-            s += Float64(abs2(x[i]*y[j] - z[i,j]))
+            s += abs2(z[i,j] - x[i]*y[j])
         end
         Gxy += s
     end
-    f.Gxy = Gxy
-
-    # Compute regularization on x.
-    f.Jx = f(Val(:Jx), x, y)
-
-    # Compute regularization on y.
-    f.Ky = f(Val(:Ky), x, y)
-
-    # Compute total objective function.
-    f.Fxy = f.Gxy + f.Jx + f.Ky
-    return f.Fxy
+    return Gxy
 end
 
-# Compute `μ*J(x)`.
-function (f::RankOneProblem)(::Val{:Jx}, x::AbstractVector, y::AbstractVector)
+# Yield homogeneous degree of `J(x)`.
+(f::RankOneProblem)(::Val{:degJ}) = 2
+
+# Compute `J(x)`.
+function (f::RankOneProblem)(::Val{:Jx}, x::AbstractVector)
     # Extract sizes and check.
     z = f.z
     (I, J) = axes(z)
     @assert axes(x) == (I,)
-    @assert axes(y) == (J,)
 
     # Compute regularization on x.
-    Jx = zero(Float64)
+    Jx = zero(promote_type(Float64, float(eltype(x))))
     @inbounds for i in first(I):last(I)-1
-        Jx += Float64(abs2(x[i+1] - x[i]))
+        Jx += oftype(Jx, abs2(x[i+1] - x[i]))
     end
-    return f.μ*Jx
+    return Jx
 end
 
-# Compute `ν*K(y)`.
-function (f::RankOneProblem)(::Val{:Ky}, x::AbstractVector, y::AbstractVector)
+# Yield homogeneous degree of `K(y)`.
+(f::RankOneProblem)(::Val{:degK}) = 2
+
+# Compute `K(y)`.
+function (f::RankOneProblem)(::Val{:Ky}, y::AbstractVector)
     # Extract sizes and check.
     z = f.z
     (I, J) = axes(z)
-    @assert axes(x) == (I,)
     @assert axes(y) == (J,)
 
     # Compute regularization on y.
-    Ky = zero(Float64)
+    Ky = zero(promote_type(Float64, float(eltype(y))))
     @inbounds for j in J
-        Ky += Float64(abs2(y[j]))
+        Ky += oftype(Ky, abs2(y[j]))
     end
-    return f.ν*Ky
+    return Ky
 end
 
-function (f::RankOneProblem{T})(::Val{:x}, x::AbstractVector{T}, y::AbstractVector{T}) where {T<:AbstractFloat}
+# Fit `x` given `y`.
+function (f::RankOneProblem)(::Val{:x}, x::AbstractVector, y::AbstractVector, μ::Number)
     # Extract sizes and check.
     z = f.z
     (I, J) = axes(z)
@@ -106,11 +92,11 @@ function (f::RankOneProblem{T})(::Val{:x}, x::AbstractVector{T}, y::AbstractVect
     m, n = length(I), length(J)
 
     # Compute the coefficients of the normal equations for x.
+    T = float(promote_type(eltype(z), typeof(zero(eltype(x))*zero(eltype(y)))))
     d = Array{T}(undef, m) # diagonal entries
     e = Array{T}(undef, m - 1) # sub-diagonal entries
     q = T(mapreduce(abs2, +, y))
-    #println(q)
-    r = T(f.μ)
+    r = as(T, μ)
     fill!(e, -r) # FIXME use UniformVector
     if m == 1
         d[1] = q
@@ -129,13 +115,16 @@ function (f::RankOneProblem{T})(::Val{:x}, x::AbstractVector{T}, y::AbstractVect
         end
     end
 
-    # Solve the normal equations for x and update f.
+    # Solve the normal equations for `x`.
     ldiv!(x, A, b)
-    f(Val(:obj), x, y)
-    return x
+
+    # Return updated variable and costs.
+    Gxy = f(Val(:Gxy), x, y)
+    Jx = f(Val(:Jx), x)
+    return x, Gxy, Jx
 end
 
-function (f::RankOneProblem{T})(::Val{:y}, x::AbstractVector{T}, y::AbstractVector{T}) where {T<:AbstractFloat}
+function (f::RankOneProblem)(::Val{:y}, x::AbstractVector, y::AbstractVector, ν::Number)
     # Extract sizes and check.
     z = f.z
     (I, J) = axes(z)
@@ -146,7 +135,8 @@ function (f::RankOneProblem{T})(::Val{:y}, x::AbstractVector{T}, y::AbstractVect
     m, n = length(I), length(J)
 
     # Compute the coefficients of the normal equations for y.
-    a = T(mapreduce(abs2, +, x) + f.ν)
+    T = float(promote_type(eltype(z), typeof(zero(eltype(x))*zero(eltype(y)))))
+    a = T(mapreduce(abs2, +, x)) + T(ν)
     b = Array{T}(undef, n)
     @inbounds for j in 1:n
         s = zero(T)
@@ -160,15 +150,11 @@ function (f::RankOneProblem{T})(::Val{:y}, x::AbstractVector{T}, y::AbstractVect
     @inbounds for j in 1:n
         y[j] = b[j]/a
     end
-    f(Val(:obj), x, y)
-    return y
-end
 
-
-function (f::RankOneProblem{T})(::Val{:alpha}, x::AbstractVector{T}, y::AbstractVector{T}) where {T<:AbstractFloat}
-    Jx = f(Val(:Jx), x, y)
-    Ky = f(Val(:Ky), x, y)
-    return AMORS.best_scaling_factor(Jx, 2, Ky, 2)
+    # Return updated variable and costs.
+    Gxy = f(Val(:Gxy), x, y)
+    Ky = f(Val(:Ky), y)
+    return y, Gxy, Ky
 end
 
 end # module RankOne
