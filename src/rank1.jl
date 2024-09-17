@@ -116,7 +116,11 @@ function (f::RankOneProblem)(::Val{:x}, x::AbstractVector, y::AbstractVector, μ
     end
 
     # Solve the normal equations for `x`.
-    ldiv!(x, A, b)
+    @static if VERSION < v"1.4"
+        copyto!(x, A\b)
+    else
+        ldiv!(x, A, b)
+    end
 
     # Return updated variable and costs.
     Gxy = f(Val(:Gxy), x, y)
