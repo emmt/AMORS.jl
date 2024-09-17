@@ -1,6 +1,6 @@
 # A Julia framework to apply the AMORS algorithm
 
-[![Build Status](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Build Status](https://ci.appveyor.com/api/projects/status/github/emmt/AMORS.jl?svg=true)](https://ci.appveyor.com/project/emmt/AMORS-jl) [![Coverage](https://codecov.io/gh/emmt/AMORS.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/emmt/AMORS.jl)
+[![Build Status](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/emmt/AMORS.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/emmt/AMORS.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/emmt/AMORS.jl)
 
 This Julia package provides an implementation of the `AMORS` algorithm (for *Alternated
 Minimization using Optimal ReScaling*) for estimating the components `x` and `y` of a
