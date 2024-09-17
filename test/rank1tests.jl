@@ -40,7 +40,7 @@ opts = (; io=io, observer=AMORS.observer, maxiter=200, xtol=1e-7)
 
     println(io, "\n# Testing with `autoscale = $(autoscale)` and `first = Val(:$(xy))`")
     (info, x, y) = AMORS.solve(RankOneTest.f, RankOneTest.x0, RankOneTest.y0; opts...,
-                               autoscale, first=Val(xy));
+                               autoscale = autoscale, first = Val(xy));
     println(io, "# Final status: ", info.status)
     @test info.status ∈ (autoscale ? (:convergence,) : (:convergence, :too_many_iterations))
 end
