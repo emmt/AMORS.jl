@@ -206,14 +206,37 @@ function solve!(f, x, y, update_x::Bool, α::Float, autoscale::Bool, Gxy::Number
                 ν::Number, Ky::Number, r::Union{Int,Float},
                 αtol::Float, xtol::Float, ytol::Float,
                 maxiter::Int, has_converged, observer, io::IO) where {Float<:AbstractFloat}
+    # Each updating of `x` or `y` counts for an evaluation while each updating of `x` or
+    # `y` with an accepted value of `α` counts for an iteration.
+    eval = 1
+    iter = (autoscale ? 0 : eval)
     xprev = similar(x)
     yprev = similar(y)
-    status = :searching
-    eval = 1 # each updating of `x` or `y` counts for an evaluation
-    iter = 0 # each updating of `x` or `y` with an accepted value of `α` counts for an iteration
     x_has_converged = false
     y_has_converged = false
+    status = :searching
     while true # Until convergence in `x` and `y`...
+        # Some estimates of `x` and `y` are available. Call observer if any and check for
+        # algorithm convergence or termination.
+        if observer !== nothing
+            rv = observer(io, Info(α, Gxy, μ, Jx, q, ν, Ky, r, autoscale, iter, eval, status), f, x, y)
+            if rv isa Symbol && rv !== status
+                # Observer has requested the algorithm to terminate.
+                status = rv
+                break
+            end
+        end
+        if x_has_converged & y_has_converged
+            # Convergence in the variables.
+            status = :convergence
+            break
+        end
+        if iter ≥ maxiter
+            # Too many iterations
+            status = :too_many_iterations
+            break
+        end
+
         # Memorize previous value of component to update.
         if update_x
             copyto!(xprev, x)
@@ -236,38 +259,20 @@ function solve!(f, x, y, update_x::Bool, α::Float, autoscale::Bool, Gxy::Number
             (iter ≥ 1 || abs(α - αprev) ≤ αtol*abs(α)) && break
         end
 
-        # A new iteration has been performed. Check for convergence in updated component
-        # and check for termination.
+        # A new iteration has been performed. Check for convergence in the updated
+        # component.
         iter += 1
         if update_x
             x_has_converged = has_converged(x, xprev, xtol)
         else
             y_has_converged = has_converged(y, yprev, ytol)
         end
-        if observer !== nothing
-            rv = observer(io, Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status), f, x, y)
-            if rv isa Symbol && rv !== status
-                # Observer has requested the algorithm to terminate.
-                status = rv
-                break
-            end
-        end
-        if x_has_converged & y_has_converged
-            # Convergence in the variables.
-            status = :convergence
-            break
-        end
-        if iter ≥ maxiter
-            # Too many iterations
-            status = :too_many_iterations
-            break
-        end
 
         # Toggle the component to update.
         update_x = !update_x
     end
 
-    return Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status), x, y
+    return Info(α, Gxy, μ, Jx, q, ν, Ky, r, autoscale, iter, eval, status), x, y
 end
 
 """
@@ -315,7 +320,7 @@ function observer(io::IO, info::Info, f, x, y)
     catch
         NaN
     end
-    if iter == 1
+    if iter == (info.autoscale ? 0 : 1)
         println(io, "#  ITER  EVAL          OBJFUN             ALPHA    BEST_ALPHA")
         println(io, "# -----------------------------------------------------------")
     end
@@ -456,25 +461,27 @@ Base.propertynames(::Info) =
      :ν,
      :Ky,
      :r,
+     :autoscale,
      :iter,
      :eval,
      :status,)
 
 Base.getproperty(A::Info, key::Symbol) =
-    key === :α      ? getfield(A, :α     )        :
-    key === :Gxy    ? getfield(A, :Gxy   )        :
-    key === :μ      ? getfield(A, :μ     )        :
-    key === :Jx     ? getfield(A, :Jx    )        :
-    key === :q      ? getfield(A, :q     )        :
-    key === :ν      ? getfield(A, :ν     )        :
-    key === :Ky     ? getfield(A, :Ky    )        :
-    key === :r      ? getfield(A, :r     )        :
-    key === :iter   ? getfield(A, :iter  )        :
-    key === :eval   ? getfield(A, :eval  )        :
-    key === :status ? getfield(A, :status)        :
-    key === :αbest  ? best_scaling_factor(A)      :
-    key === :η      ? effective_hyperparameter(A) :
-    key === :Fxy    ? objective_function(A)       :
+    key === :α         ? getfield(A, :α        )     :
+    key === :Gxy       ? getfield(A, :Gxy      )     :
+    key === :μ         ? getfield(A, :μ        )     :
+    key === :Jx        ? getfield(A, :Jx       )     :
+    key === :q         ? getfield(A, :q        )     :
+    key === :ν         ? getfield(A, :ν        )     :
+    key === :Ky        ? getfield(A, :Ky       )     :
+    key === :r         ? getfield(A, :r        )     :
+    key === :autoscale ? getfield(A, :autoscale)     :
+    key === :iter      ? getfield(A, :iter     )     :
+    key === :eval      ? getfield(A, :eval     )     :
+    key === :status    ? getfield(A, :status   )     :
+    key === :αbest     ? best_scaling_factor(A)      :
+    key === :η         ? effective_hyperparameter(A) :
+    key === :Fxy       ? objective_function(A)       :
     throw(KeyError(key))
 
 # Predicates.
