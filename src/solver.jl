@@ -42,7 +42,7 @@ form:
 
 where `G` is a function of the *bilinear model* `x⊗y`, `J` and `K` are positive
 homogeneous functions of the respective variables `x` and `y`, `μ > 0` and `ν > 0` are
-hyperparameters. The notation `x⊗y` denotes a *bilinear model* which has the following
+hyper-parameters. The notation `x⊗y` denotes a *bilinear model* which has the following
 invariance property:
 
     (α*x)⊗(y/α) = x⊗y
@@ -93,7 +93,7 @@ The following keywords can be specified:
   `autoscale` is `false`, the value of `α` is unchanged for all iterations.
 
 - `autoscale` specifies whether to automatically set the scaling factor `α`. By default,
-  `autoscale = true`. This keyword is provided for testing the efficiency of the `AMORS`
+  `autoscale = true`. This keyword is provided for testing the efficiency of the AMORS
   algorithm, it is recommended to not disable autoscaling.
 
 - `Float` is the floating-point type for scalar computations. By default, `Float =
@@ -276,7 +276,7 @@ end
 yields whether the variables `x` has converged. Argument `xp` is the previous value of `x`
 and `tol ≥ 0` is a relative tolerance.
 
-In the default implementation provided by `AMORS` for `x` and `xp` being arrays, the
+In the default implementation provided by AMORS for `x` and `xp` being arrays, the
 result is given by:
 
     ‖x - xp‖ ≤ tol⋅‖x‖
@@ -330,7 +330,7 @@ end
 Multiply in-place the entries of `x` by the scalar `α` and return `x`. Whatever the values
 of the entries of `x`, nothing is done if `α = 1` and `x` is zero-filled if `α = 0`.
 
-The `AMORS` package provides a default implementation of the method that is applicable to
+The AMORS package provides a default implementation of the method that is applicable to
 any abstract array `x`. The method is expected to be extended for other types of argument
 `x`.
 
@@ -395,7 +395,7 @@ best_scaling_factor(A::Info) = best_scaling_factor(A.Jx, A.q, A.Ky, A.r)
 """
     AMORS.objective_function(A::AMORS.Info)
 
-yields the value of the `AMORS` objective function:
+yield the value of the AMORS objective function:
 
     F(α*x, y/α, μ, ν) = F(x, y, μ*|α|^q, ν/|α|^r)
                       = G(x⊗y) + μ*J(x)*|α|^q + ν*K(y)/|α|^r

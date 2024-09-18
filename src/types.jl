@@ -1,8 +1,8 @@
 """
     info = AMORS.Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status)
 
-builds a structured object storing all informations about `AMORS` algorithm state. This
-kind of object is returned by [`AMORS.solve`](@ref) and [`AMORS.solve!`](@ref)
+builds a structured object storing all informations about AMORS algorithm state. This kind
+of object is returned by [`AMORS.solve`](@ref) and [`AMORS.solve!`](@ref)
 
 The properties of the object have the same names as the arguments of the constructor:
 
