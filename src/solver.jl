@@ -308,8 +308,8 @@ Observer that can be used in [`AMORS.solve`](@ref) or [`AMORS.solve!`](@ref).
 function observer(io::IO, info::Info, f, x, y)
     iter = info.iter
     eval = info.eval
-    Fxy = objective_function(info)
-    α = info.α
+    Fxy  = info.Fxy
+    α    = info.α
     αbest = try
         best_scaling_factor(info)
     catch
@@ -367,9 +367,11 @@ function apply_scaling_factor!(α::Real, x, y)
 end
 
 """
-    AMORS.best_scaling_factor(J(x), deg(J), K(y), deg(K)) -> α⁺
+    info.αbest
+    AMORS.best_scaling_factor(info::AMORS.Info)
+    AMORS.best_scaling_factor(J(x), deg(J), K(y), deg(K))
 
-yields the best scaling factor defined by:
+yield the best scaling factor defined by:
 
     α⁺ = argmin_{α > 0} J(α*x) + K(y/α)
 
@@ -377,9 +379,10 @@ and which has a closed-form expression:
 
     α⁺ = ((deg(K)*K(y))/(deg(J)*J(x)))^(1/(deg(J) + deg(K)))
 
-The arguments are the values of the homogeneous objective functions, `J(x)` and `K(y)`,
-and their respective degrees `deg(J)` and `deg(K)` for the current estimates of the
-variables `x` and `y` of a bilinear model.
+The arguments are the values of the homogeneous functions, `J(x)` and `K(y)`, and their
+respective degrees `q = deg(J)` and `r = deg(K)` for the current estimates of the
+variables `x` and `y` of a bilinear model. All these arguments may be provided by AMORS
+algorithm state `info`.
 
 """
 function best_scaling_factor(Jx::Number, degJ::Number, Ky::Number, degK::Number)
@@ -393,16 +396,86 @@ end
 best_scaling_factor(A::Info) = best_scaling_factor(A.Jx, A.q, A.Ky, A.r)
 
 """
-    AMORS.objective_function(A::AMORS.Info)
+    info.Fxy
+    AMORS.objective_function(info::AMORS.Info)
+    AMORS.objective_function(G(x⊗y), μ, J(x), deg(J), ν, K(y), deg(K), α=1)
 
 yield the value of the AMORS objective function:
 
     F(α*x, y/α, μ, ν) = F(x, y, μ*|α|^q, ν/|α|^r)
                       = G(x⊗y) + μ*J(x)*|α|^q + ν*K(y)/|α|^r
 
+with `q = deg(J)` and `r = deg(K)` the homogeneous degrees of the functions `J(x)` and
+`K(y)`. All required arguments may be provided by AMORS algorithm state `info`.
+
 """
-objective_function(A::Info) =
-    A.Gxy + A.μ*A.Jx*abs(A.α)^A.q + A.ν*A.Ky/abs(A.α)^A.r
+function objective_function(Gxy::Number,
+                            μ::Number, Jx::Number, q::Real,
+                            ν::Number, Ky::Number, r::Real, α::Real = 1.0)
+    return Gxy + μ*Jx*abs(α)^q + ν*Ky/abs(α)^r
+end
+
+objective_function(A::Info) = objective_function(A.Gxy, A.μ, A.Jx, A.q, A.ν, A.Ky, A.r, A.α)
+
+"""
+    info.η
+    AMORS.effective_hyperparameter(info::AMORS.Info)
+    AMORS.effective_hyperparameter(μ, q, ν, r)
+
+yield the value of the effective hyper-parameter in AMORS algorithm:
+
+    η = ((r/q)^qp + (q/r)^rp)*(μ^rp)*(ν^qp)
+
+with:
+
+    qp = q/(q + r)
+    rp = r/(q + r)
+
+and with `q = deg(J)` and `r = deg(K)` the homogeneous degrees of the functions `J(x)` and
+`K(y)` and `μ > 0` and `ν > 0` their respective multipliers. All required arguments may be
+provided by AMORS algorithm state `info`.
+
+"""
+function effective_hyperparameter(μ::Number, q::Real, ν::Number, r::Real)
+    qp = q/(q + r)
+    rp = r/(q + r)
+    return ((r/q)^qp + (q/r)^rp)*(μ^rp)*(ν^qp)
+end
+
+effective_hyperparameter(A::Info) = effective_hyperparameter(A.μ, A.q, A.ν, A.r)
+
+Base.propertynames(::Info) =
+    (:α,
+     :αbest,
+     :η,
+     :Fxy,
+     :Gxy,
+     :μ,
+     :Jx,
+     :q,
+     :ν,
+     :Ky,
+     :r,
+     :iter,
+     :eval,
+     :status,)
+
+Base.getproperty(A::Info, key::Symbol) =
+    key === :α      ? getfield(A, :α     )        :
+    key === :Gxy    ? getfield(A, :Gxy   )        :
+    key === :μ      ? getfield(A, :μ     )        :
+    key === :Jx     ? getfield(A, :Jx    )        :
+    key === :q      ? getfield(A, :q     )        :
+    key === :ν      ? getfield(A, :ν     )        :
+    key === :Ky     ? getfield(A, :Ky    )        :
+    key === :r      ? getfield(A, :r     )        :
+    key === :iter   ? getfield(A, :iter  )        :
+    key === :eval   ? getfield(A, :eval  )        :
+    key === :status ? getfield(A, :status)        :
+    key === :αbest  ? best_scaling_factor(A)      :
+    key === :η      ? effective_hyperparameter(A) :
+    key === :Fxy    ? objective_function(A)       :
+    throw(KeyError(key))
 
 # Predicates.
 ispositive(x::Number) = x > zero(x)

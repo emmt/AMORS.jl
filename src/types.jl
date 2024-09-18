@@ -4,7 +4,7 @@
 builds a structured object storing all informations about AMORS algorithm state. This kind
 of object is returned by [`AMORS.solve`](@ref) and [`AMORS.solve!`](@ref)
 
-The properties of the object have the same names as the arguments of the constructor:
+The properties of the object include the arguments of the constructor:
 
     info.α      # scaling factor
     info.Gxy    # value of G(x⊗y)
@@ -18,15 +18,15 @@ The properties of the object have the same names as the arguments of the constru
     info.eval   # number of "evaluations"
     info.status # current status of the algorithm
 
-Call `AMORS.best_scaling_factor(info)` to comnpute the best possible value of `α` which
-may not be `info.α` if autoscaling has been disabled in [`AMORS.solve`](@ref) or
-[`AMORS.solve!`](@ref).
+plus some others:
 
-Call `AMORS.objective_function(info)` to compute the value of the objective function that
-is to be minimized by the `AMORS` algorithm in `x`, `y`, and possibly `α`:
+    info.αbest  # best scaling factor
+    info.Fxy    # value of F(α*x, y/α, μ, ν)
+    info.η      # effective hyper-parameter
 
-    F(α*x, y/α, μ, ν) = F(x, y, μ*|α|^q, ν/|α|^r)
-                      = G(x⊗y) + μ*J(x)*|α|^q + ν*K(y)/|α|^r
+where `F(x,y,μ,ν) = G(x⊗y) + μ*J(x) + ν*K(y)` is the objective function to be minimized by
+AMORS algorithm. Note that `info.αbest` and `info.α` may be different if autoscaling has
+been disabled in [`AMORS.solve`](@ref) or [`AMORS.solve!`](@ref).
 
 """
 struct Info{TA<:AbstractFloat,TG<:Number,

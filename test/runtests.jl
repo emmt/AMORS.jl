@@ -50,6 +50,35 @@ using Test
         end
     end
 
+    @testset "Algorithm state" begin
+        α = 0.91
+        Gxy = 156.12
+        μ = 10.7
+        Jx = 37.1
+        q = 1
+        ν = 2.1
+        Ky = 94.2
+        r = 2
+        iter = 237
+        eval = 241
+        status = :none
+        A = @inferred AMORS.Info(α, Gxy, μ, Jx, q, ν, Ky, r, iter, eval, status)
+        @test A.α      == α
+        @test A.Gxy    == Gxy
+        @test A.μ      == μ
+        @test A.Jx     == Jx
+        @test A.q      == q
+        @test A.ν      == ν
+        @test A.Ky     == Ky
+        @test A.r      == r
+        @test A.iter   == iter
+        @test A.eval   == eval
+        @test A.status == status
+        @test A.αbest  == AMORS.best_scaling_factor(Jx, q, Ky, r)
+        @test A.η      == AMORS.effective_hyperparameter(μ, q, ν, r)
+        @test A.Fxy    == AMORS.objective_function(Gxy, μ, Jx, q, ν, Ky, r, α)
+    end
+
     include("rank1tests.jl")
 
 end
