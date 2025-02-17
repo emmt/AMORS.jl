@@ -1,5 +1,14 @@
 # User visible changes in `AMORS` package
 
+## Version 0.3.1
+
+- `AMORS` is now public.
+
+- Add `autoscale` property and fix iteration counting.
+
+- More properties for `AMORS.Info`.
+
+
 ## Version 0.3.0
 
 - New version of the AMORS algorithm more in-line with the EUSIPCO (2021) paper including

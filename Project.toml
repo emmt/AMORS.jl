@@ -1,7 +1,7 @@
 name = "AMORS"
 uuid = "77d29c75-3847-48dd-b74a-66585bbee1d5"
 authors = ["Éric Thiébaut <eric.thiebaut@univ-lyon1.fr> and contributors"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
