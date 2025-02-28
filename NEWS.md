@@ -1,5 +1,9 @@
 # User visible changes in `AMORS` package
 
+- `@public` macro to declare non-exported symbols as *public*, a concept introduced in
+  Julia 1.11. The macro does nothing on older Julia versions.
+
+
 ## Version 0.3.1
 
 - `AMORS` is now public.

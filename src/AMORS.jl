@@ -16,6 +16,11 @@ ReScaling* method described in:
 """
 module AMORS
 
+include("compat.jl")
+
+@public(Info, solve, solve!, has_converged, observer, scale!, apply_scaling_factor!,
+        best_scaling_factor, objective_function, effective_hyperparameter)
+
 using Printf
 using TypeUtils
 
