@@ -9,7 +9,6 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 TypeUtils = "c3b1956e-8857-4d84-9b79-890df85b1e67"
 
 [compat]
-Random = "1"
 TypeUtils = "1"
 julia = "1"
 
