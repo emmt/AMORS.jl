@@ -57,8 +57,8 @@ needed to compute the objective function `F(x,y,μ,ν)`. The argument `f` is cal
 `f(Val(task), args...)` where `task` is a symbolic name specifying the operation to be
 performed:
 
-    f(Val(:degJ))       -> deg(J)  # unless keyword `r` is specified
-    f(Val(:degK))       -> deg(K)  # unless keyword `q` is specified
+    f(Val(:degJ))       -> deg(J)  # unless keyword `q` is specified
+    f(Val(:degK))       -> deg(K)  # unless keyword `r` is specified
     f(Val(:Jx), x)      -> J(x)
     f(Val(:Ky), y)      -> K(y)
     f(Val(:x), x, y, μ) -> x⁺, G(x⁺⊗y), J(x⁺)
@@ -374,28 +374,28 @@ end
 """
     info.αbest
     AMORS.best_scaling_factor(info::AMORS.Info)
-    AMORS.best_scaling_factor(J(x), deg(J), K(y), deg(K))
+    AMORS.best_scaling_factor(μ*J(x), q, ν*K(y), r)
 
 yield the best scaling factor defined by:
 
-    α⁺ = argmin_{α > 0} J(α*x) + K(y/α)
+    α⁺ = argmin_{α > 0} μ*J(α*x) + ν*K(y/α)
 
 and which has a closed-form expression:
 
-    α⁺ = ((deg(K)*K(y))/(deg(J)*J(x)))^(1/(deg(J) + deg(K)))
+    α⁺ = ((r*ν*K(y))/(q*μ*J(x)))^(1/(q + r))
 
-The arguments are the values of the homogeneous functions, `J(x)` and `K(y)`, and their
-respective degrees `q = deg(J)` and `r = deg(K)` for the current estimates of the
-variables `x` and `y` of a bilinear model. All these arguments may be provided by AMORS
-algorithm state `info`.
+The arguments are the values of the homogeneous functions times their respective
+multiplier, `μ*J(x)` and `ν*K(y)`, and their respective degrees `q = deg(J)` and `r =
+deg(K)` for the current estimates of the variables `x` and `y` of a bilinear model. All
+these arguments may be provided by AMORS algorithm state `info`.
 
 """
-function best_scaling_factor(Jx::Number, degJ::Number, Ky::Number, degK::Number)
-    Jx > zero(Jx) || throw(DomainError(Jx, "`J(x) > 0` must hold"))
-    Ky > zero(Ky) || throw(DomainError(Ky, "`K(y) > 0` must hold"))
-    degJ > zero(degJ) || throw(DomainError(degJ, "`deg(J) > 0` must hold"))
-    degK > zero(degK) || throw(DomainError(degK, "`deg(K) > 0` must hold"))
-    return ((degK*Ky)/(degJ*Jx))^inv(degJ + degK)
+function best_scaling_factor(μJx::Number, q::Number, νKy::Number, r::Number)
+    μJx > zero(μJx) || throw(DomainError(μJx, "`μ*J(x) > 0` must hold"))
+    νKy > zero(νKy) || throw(DomainError(νKy, "`ν*K(y) > 0` must hold"))
+    q > zero(q) || throw(DomainError(q, "`q = deg(J) > 0` must hold"))
+    r > zero(r) || throw(DomainError(r, "`r = deg(K) > 0` must hold"))
+    return ((r*νKy)/(q*μJx))^inv(q + r)
 end
 
 best_scaling_factor(A::Info) = best_scaling_factor(A.Jx, A.q, A.Ky, A.r)
