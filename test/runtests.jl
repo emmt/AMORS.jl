@@ -82,5 +82,6 @@ using Test
     end
 
     include("rank1tests.jl")
-
+    RankOneTest.runtest()
+    nothing
 end
