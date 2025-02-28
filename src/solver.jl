@@ -374,6 +374,7 @@ end
 """
     info.αbest
     AMORS.best_scaling_factor(info::AMORS.Info)
+    AMORS.best_scaling_factor(μ, J(x), q, ν, K(y), r)
     AMORS.best_scaling_factor(μ*J(x), q, ν*K(y), r)
 
 yield the best scaling factor defined by:
@@ -384,12 +385,15 @@ and which has a closed-form expression:
 
     α⁺ = ((r*ν*K(y))/(q*μ*J(x)))^(1/(q + r))
 
-The arguments are the values of the homogeneous functions times their respective
-multiplier, `μ*J(x)` and `ν*K(y)`, and their respective degrees `q = deg(J)` and `r =
+The arguments are the values of the homogeneous functions, `J(x)` and `K(y)`, their
+respective multiplier, `μ` and `ν`, and their respective degrees `q = deg(J)` and `r =
 deg(K)` for the current estimates of the variables `x` and `y` of a bilinear model. All
 these arguments may be provided by AMORS algorithm state `info`.
 
 """
+best_scaling_factor(μ::Number, Jx::Number, q::Real, ν::Number, Ky::Number, r::Real) =
+    best_scaling_factor(μ*Jx, q, ν*Ky, r)
+
 function best_scaling_factor(μJx::Number, q::Real, νKy::Number, r::Real)
     μJx > zero(μJx) || throw(DomainError(μJx, "`μ*J(x) > 0` must hold"))
     νKy > zero(νKy) || throw(DomainError(νKy, "`ν*K(y) > 0` must hold"))
@@ -398,12 +402,13 @@ function best_scaling_factor(μJx::Number, q::Real, νKy::Number, r::Real)
     return ((r*νKy)/(q*μJx))^inv(q + r)
 end
 
-best_scaling_factor(A::Info) = best_scaling_factor(A.Jx, A.q, A.Ky, A.r)
+best_scaling_factor(A::Info) = best_scaling_factor(A.μ, A.Jx, A.q, A.ν, A.Ky, A.r)
 
 """
     info.Fxy
     AMORS.objective_function(info::AMORS.Info)
     AMORS.objective_function(G(x⊗y), μ, J(x), deg(J), ν, K(y), deg(K), α=1)
+    AMORS.objective_function(G(x⊗y), μ*J(x), deg(J), ν*K(y), deg(K), α=1)
 
 yield the value of the AMORS objective function:
 
@@ -417,7 +422,12 @@ with `q = deg(J)` and `r = deg(K)` the homogeneous degrees of the functions `J(x
 function objective_function(Gxy::Number,
                             μ::Number, Jx::Number, q::Real,
                             ν::Number, Ky::Number, r::Real, α::Real = 1.0)
-    return Gxy + μ*Jx*abs(α)^q + ν*Ky/abs(α)^r
+    return objective_function(Gxy, μ*Jx, q, ν*Ky, r, α)
+end
+function objective_function(Gxy::Number,
+                            μJx::Number, q::Real,
+                            νKy::Number, r::Real, α::Real = 1.0)
+    return Gxy + μJx*abs(α)^q + νKy/abs(α)^r
 end
 
 objective_function(A::Info) = objective_function(A.Gxy, A.μ, A.Jx, A.q, A.ν, A.Ky, A.r, A.α)

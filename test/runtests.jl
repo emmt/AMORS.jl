@@ -36,17 +36,22 @@ using Test
         end
 
         # Test `best_scaling_factor`
-        let Jx = 0.1, degJ = 2, Ky = 0.01, degK = 3, alpha = ((degK*Ky)/(degJ*Jx))^inv(degJ + degK)
-            @test AMORS.best_scaling_factor(Jx, degJ, Ky, degK) ≈ alpha
-            @test AMORS.best_scaling_factor(Ky, degK, Jx, degJ) ≈ inv(alpha)
-            @test_throws DomainError AMORS.best_scaling_factor(0.0, degJ, Ky, degK)
-            @test_throws DomainError AMORS.best_scaling_factor(Jx, -0.1, Ky, degK)
-            @test_throws DomainError AMORS.best_scaling_factor(Jx, degJ, -1e2, degK)
-            @test_throws DomainError AMORS.best_scaling_factor(Jx, degJ, Ky, -1.0)
+        let μ = 1e-2, Jx = 0.1, q = 2, ν = 0.7, Ky = 0.01, r = 3
+            alpha = ((r*ν*Ky)/(q*μ*Jx))^inv(q + r)
+            @test AMORS.best_scaling_factor(μ,Jx, q, ν,Ky, r) ≈ alpha
+            @test AMORS.best_scaling_factor(μ*Jx, q, ν*Ky, r) ≈ alpha
+            @test AMORS.best_scaling_factor(ν,Ky, r, μ,Jx, q) ≈ inv(alpha)
+            @test AMORS.best_scaling_factor(ν*Ky, r, μ*Jx, q) ≈ inv(alpha)
+            @test_throws DomainError AMORS.best_scaling_factor(0, Jx,  q,  ν, Ky,  r)
+            @test_throws DomainError AMORS.best_scaling_factor(μ, Jx,  q,  0, Ky,  r)
+            @test_throws DomainError AMORS.best_scaling_factor(μ, Jx, -q,  ν, Ky,  r)
+            @test_throws DomainError AMORS.best_scaling_factor(μ, Jx,  q, -ν, Ky,  r)
+            @test_throws DomainError AMORS.best_scaling_factor(μ, Jx,  q,  ν, Ky, -r)
         end
-        let Jx = 9.3e7, degJ = 1, Ky = 1.4e-3, degK = 2, alpha = ((degK*Ky)/(degJ*Jx))^inv(degJ + degK)
-            @test AMORS.best_scaling_factor(Jx, degJ, Ky, degK) ≈ alpha
-            @test AMORS.best_scaling_factor(Ky, degK, Jx, degJ) ≈ inv(alpha)
+        let μ = 1.2e-3, Jx = 9.3e7, q = 1.4, ν = 3.2e1, Ky = 1.4e-3, r = 2
+            alpha = ((r*ν*Ky)/(q*μ*Jx))^inv(q + r)
+            @test AMORS.best_scaling_factor(μ,Jx, q, ν,Ky, r) ≈ alpha
+            @test AMORS.best_scaling_factor(ν,Ky, r, μ,Jx, q) ≈ inv(alpha)
         end
     end
 
@@ -76,7 +81,7 @@ using Test
         @test A.iter      == iter
         @test A.eval      == eval
         @test A.status    == status
-        @test A.αbest     == AMORS.best_scaling_factor(Jx, q, Ky, r)
+        @test A.αbest     == AMORS.best_scaling_factor(μ, Jx, q, ν, Ky, r)
         @test A.η         == AMORS.effective_hyperparameter(μ, q, ν, r)
         @test A.Fxy       == AMORS.objective_function(Gxy, μ, Jx, q, ν, Ky, r, α)
     end

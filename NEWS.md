@@ -3,6 +3,10 @@
 - `@public` macro to declare non-exported symbols as *public*, a concept introduced in
   Julia 1.11. The macro does nothing on older Julia versions.
 
+- Fix `best_scaling_factor`.
+
+- Improve doc.
+
 
 ## Version 0.3.1
 
