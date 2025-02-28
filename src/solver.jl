@@ -390,7 +390,7 @@ deg(K)` for the current estimates of the variables `x` and `y` of a bilinear mod
 these arguments may be provided by AMORS algorithm state `info`.
 
 """
-function best_scaling_factor(μJx::Number, q::Number, νKy::Number, r::Number)
+function best_scaling_factor(μJx::Number, q::Real, νKy::Number, r::Real)
     μJx > zero(μJx) || throw(DomainError(μJx, "`μ*J(x) > 0` must hold"))
     νKy > zero(νKy) || throw(DomainError(νKy, "`ν*K(y) > 0` must hold"))
     q > zero(q) || throw(DomainError(q, "`q = deg(J) > 0` must hold"))

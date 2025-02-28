@@ -31,8 +31,8 @@ been disabled in [`AMORS.solve`](@ref) or [`AMORS.solve!`](@ref).
 
 """
 struct Info{TA<:AbstractFloat,TG<:Number,
-            TM<:Number,TJ<:Number,TQ<:Union{Int,TA},
-            TN<:Number,TK<:Number,TR<:Union{Int,TA}}
+            TM<:Number,TJ<:Number,TQ<:Real,
+            TN<:Number,TK<:Number,TR<:Real}
     α::TA           # scaling factor
     Gxy::TG         # value of G(x⊗y)
     μ::TM           # value of hyper-parameter for J(x)
@@ -51,8 +51,8 @@ struct Info{TA<:AbstractFloat,TG<:Number,
                   autoscale::Bool,
                   iter::Int, eval::Int,
                   status::Symbol) where {TA<:AbstractFloat,TG<:Number,
-                                         TM<:Number,TJ<:Number,TQ<:Union{Int,TA},
-                                         TN<:Number,TK<:Number,TR<:Union{Int,TA}}
+                                         TM<:Number,TJ<:Number,TQ<:Real,
+                                         TN<:Number,TK<:Number,TR<:Real}
         return new{TA,TG,TM,TJ,TQ,TN,TK,TR}(α, Gxy, μ, Jx, q, ν, Ky, r, autoscale, iter, eval, status)
     end
 end
