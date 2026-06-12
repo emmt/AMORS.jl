@@ -1,6 +1,6 @@
 # User visible changes in `AMORS` package
 
-## Unreleased
+## Version 0.3.3 [2026-06-11]
 
 ### Fixed
 
