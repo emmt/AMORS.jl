@@ -1,5 +1,11 @@
 # User visible changes in `AMORS` package
 
+## Unreleased
+
+### Fixed
+
+- Bump compatibility version for `TypeUtils`.
+
 ## Version 0.3.2
 
 - `@public` macro to declare non-exported symbols as *public*, a concept introduced in
